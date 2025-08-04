@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  stravaId    Int      @unique
+  firstName   String
+  lastName    String
+  age         Int
+  city        String
+  state       String
+  latitude    Float
+  longitude   Float
+  bio         String?
+  photos      Json     @default("[]")
+  createdAt   DateTime @default(now())
+  lastActive  DateTime @default(now())
+
+  // Relations
+  fitnessStats        FitnessStats?
+  stravaActivities    StravaActivity[]
+  matchingPreferences MatchingPreferences?
+  matchesAsUser1      Match[]              @relation("User1Matches")
+  matchesAsUser2      Match[]              @relation("User2Matches")
+  sentMessages        Message[]            @relation("MessageSender")
+
+  @@map("users")
+}
+
+model FitnessStats {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  weeklyDistance     Float    @default(0)
+  weeklyActivities   Int      @default(0)
+  averagePace        Float?
+  favoriteActivities Json     @default("[]")
+  totalDistance      Float    @default(0)
+  longestRun         Float    @default(0)
+  lastSyncDate       DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("fitness_stats")
+}
+
+model StravaActivity {
+  id            Int      @id
+  userId        String
+  name          String
+  type          String
+  distance      Float
+  movingTime    Int
+  averageSpeed  Float
+  startDate     DateTime
+  elevationGain Float    @default(0)
+  syncedAt      DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("strava_activities")
+}
+
+model Match {
+  id                String   @id @default(cuid())
+  user1Id           String
+  user2Id           String
+  compatibilityScore Float
+  matchedAt         DateTime @default(now())
+  status            String   @default("active") // active, archived
+
+  // Relations
+  user1    User      @relation("User1Matches", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User      @relation("User2Matches", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([user1Id, user2Id])
+  @@map("matches")
+}
+
+model MatchingPreferences {
+  id                    String @id @default(cuid())
+  userId                String @unique
+  minAge                Int    @default(18)
+  maxAge                Int    @default(65)
+  maxDistance           Float  @default(50) // in kilometers
+  preferredActivities   Json   @default("[]")
+  minCompatibilityScore Float  @default(0)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("matching_preferences")
+}
+
+model Message {
+  id       String   @id @default(cuid())
+  matchId  String
+  senderId String
+  content  String
+  sentAt   DateTime @default(now())
+  isRead   Boolean  @default(false)
+
+  // Relations
+  match  Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender User  @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model FitnessThreshold {
+  id                   String   @id @default(cuid())
+  weeklyDistance       Float    @default(0)
+  weeklyActivities     Int      @default(0)
+  averagePace          Float?
+  allowedActivityTypes Json     @default("[]")
+  updatedAt            DateTime @default(now()) @updatedAt
+  updatedBy            String
+
+  @@map("fitness_thresholds")
+}
