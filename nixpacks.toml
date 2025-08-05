@@ -1,0 +1,22 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "postgresql_14"]
+
+[phases.install]
+cmds = [
+  "npm install -g serve",
+  "cd backend && npm ci",
+  "cd backend && npx prisma generate",
+  "cd frontend && npm ci --legacy-peer-deps"
+]
+
+[phases.build]
+cmds = [
+  "cd backend && npm run build",
+  "cd frontend && npm run build"
+]
+
+[start]
+cmd = "cd backend && npx prisma migrate deploy && npm start"
+
+[variables]
+NODE_ENV = "production"
