@@ -89,3 +89,7 @@ The frontend will be available at `http://localhost:3000` and the backend API at
 - **Cache**: Redis
 - **Authentication**: JWT with refresh tokens
 - **External API**: Strava API v3
+
+## Threshholds
+
+Activities = ["Run","Ride","Hike","Swim","Walk"]

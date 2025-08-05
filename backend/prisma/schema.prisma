@@ -18,6 +18,7 @@ model User {
   firstName   String
   lastName    String
   age         Int
+  gender      String?  @default("female") // male, female, other
   city        String
   state       String
   latitude    Float

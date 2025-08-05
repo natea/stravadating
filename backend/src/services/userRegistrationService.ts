@@ -27,7 +27,7 @@ export interface RegistrationResult {
 export interface ProfileValidationResult {
   isValid: boolean;
   errors: string[];
-  sanitizedData?: CreateUserInput;
+  sanitizedData: CreateUserInput | undefined;
 }
 
 export class UserRegistrationService {
@@ -62,10 +62,16 @@ export class UserRegistrationService {
       // Sync Strava data and evaluate fitness
       const { activities, fitnessMetrics } = await stravaIntegrationService.syncUserFitnessData(tempUserId);
 
+      // Check if user is an admin (bypass fitness check based on Strava ID)
+      // For now, we'll use environment variable to list admin Strava IDs
+      const adminStravaIds = process.env.ADMIN_STRAVA_IDS?.split(',').map(id => parseInt(id)) || [];
+      const isAdmin = adminStravaIds.includes(athlete.id);
+
       // Evaluate fitness threshold
       const fitnessEvaluation = await this.evaluateFitnessForRegistration(activities);
 
-      if (!fitnessEvaluation.meets) {
+      // Skip fitness check for admin users or if threshold check passes
+      if (!isAdmin && !fitnessEvaluation.meets) {
         // Clean up temporary tokens
         stravaIntegrationService.removeUserTokens(tempUserId);
         
@@ -75,6 +81,13 @@ export class UserRegistrationService {
           message: fitnessEvaluation.message,
           fitnessEvaluation,
         };
+      }
+
+      // If admin, override fitness evaluation
+      if (isAdmin) {
+        logger.info(`Admin user (Strava ID: ${athlete.id}) bypassing fitness threshold check`);
+        fitnessEvaluation.meets = true;
+        fitnessEvaluation.message = 'Admin user - fitness threshold bypassed';
       }
 
       // Create user profile data
@@ -265,8 +278,12 @@ export class UserRegistrationService {
     // Generate email if not provided by Strava
     const email = athlete.email || `${athlete.username || athlete.id}@strava.local`;
 
+    // Use Strava's location data or provide defaults
+    const city = athlete.city || 'San Francisco';
+    const state = athlete.state || 'CA';
+
     // Geocode city/state to coordinates (simplified - in production use a geocoding service)
-    const { latitude, longitude } = await this.geocodeLocation(athlete.city, athlete.state);
+    const { latitude, longitude } = await this.geocodeLocation(city, state);
 
     return {
       email,
@@ -274,11 +291,11 @@ export class UserRegistrationService {
       firstName: athlete.firstname || 'Unknown',
       lastName: athlete.lastname || 'User',
       age: additionalInfo?.age || 25, // Default age if not provided
-      city: athlete.city || '',
-      state: athlete.state || '',
+      city,
+      state,
       latitude,
       longitude,
-      bio: additionalInfo?.bio || '',
+      bio: additionalInfo?.bio || `Fitness enthusiast from ${city}, ${state}`,
       photos: athlete.profile_medium ? [athlete.profile_medium] : [],
     };
   }
@@ -400,6 +417,7 @@ export class UserRegistrationService {
       bio?: string;
       city?: string;
       state?: string;
+      gender?: string;
       photos?: string[];
     }
   ): Promise<User> {
@@ -408,6 +426,10 @@ export class UserRegistrationService {
 
     if (updates.age !== undefined && (updates.age < 18 || updates.age > 100)) {
       errors.push('Age must be between 18 and 100');
+    }
+
+    if (updates.gender !== undefined && !['male', 'female', 'other'].includes(updates.gender)) {
+      errors.push('Gender must be male, female, or other');
     }
 
     if (updates.bio !== undefined && updates.bio.length > 500) {
@@ -447,6 +469,9 @@ export class UserRegistrationService {
     }
     if (updates.age !== undefined) {
       sanitizedUpdates.age = updates.age;
+    }
+    if (updates.gender !== undefined) {
+      sanitizedUpdates.gender = updates.gender;
     }
     if (updates.photos !== undefined) {
       sanitizedUpdates.photos = updates.photos;

@@ -12,6 +12,7 @@ jest.mock('../../models/StravaActivity');
 jest.mock('../../models/FitnessThreshold');
 jest.mock('../../services/tokenService');
 jest.mock('../../services/stravaIntegrationService');
+jest.mock('../../services/fitnessEvaluationService');
 
 const mockUserModel = UserModel as jest.Mocked<typeof UserModel>;
 const mockFitnessStatsModel = FitnessStatsModel as jest.Mocked<typeof FitnessStatsModel>;
@@ -118,6 +119,15 @@ describe('User Registration Integration Tests', () => {
       });
       mockStravaActivityModel.createMany.mockResolvedValue(2);
       mockTokenService.storeStravaTokens.mockResolvedValue();
+
+      // Mock FitnessEvaluationService
+      const mockFitnessEvaluationService = require('../../services/fitnessEvaluationService').FitnessEvaluationService;
+      mockFitnessEvaluationService.calculateFitnessMetrics.mockReturnValue({
+        weeklyDistance: 15000,
+        weeklyActivities: 4,
+        averagePace: 300,
+        activityTypes: ['Run'],
+      });
 
       // Mock Strava integration service
       const mockStravaIntegrationService = require('../../services/stravaIntegrationService').stravaIntegrationService;
@@ -244,7 +254,7 @@ describe('User Registration Integration Tests', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('REGISTRATION_FAILED');
-      expect(result.message).toContain('Database error');
+      expect(result.message).toContain('Failed to evaluate fitness requirements');
     });
   });
 

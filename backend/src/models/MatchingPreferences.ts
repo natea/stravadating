@@ -6,31 +6,48 @@ export class MatchingPreferencesModel {
    * Create matching preferences for a user
    */
   static async create(data: CreateMatchingPreferencesInput): Promise<MatchingPreferences> {
-    return await prisma.matchingPreferences.create({
+    const result = await prisma.matchingPreferences.create({
       data: {
         ...data,
         preferredActivities: data.preferredActivities || [],
       },
     });
+    
+    return {
+      ...result,
+      preferredActivities: (result.preferredActivities as string[]) || [],
+    } as MatchingPreferences;
   }
 
   /**
    * Find matching preferences by user ID
    */
   static async findByUserId(userId: string): Promise<MatchingPreferences | null> {
-    return await prisma.matchingPreferences.findUnique({
+    const result = await prisma.matchingPreferences.findUnique({
       where: { userId },
     });
+    
+    if (!result) return null;
+    
+    return {
+      ...result,
+      preferredActivities: (result.preferredActivities as string[]) || [],
+    } as MatchingPreferences;
   }
 
   /**
    * Update matching preferences
    */
   static async update(userId: string, data: UpdateMatchingPreferencesInput): Promise<MatchingPreferences> {
-    return await prisma.matchingPreferences.update({
+    const result = await prisma.matchingPreferences.update({
       where: { userId },
       data,
     });
+    
+    return {
+      ...result,
+      preferredActivities: (result.preferredActivities as string[]) || [],
+    } as MatchingPreferences;
   }
 
   /**
@@ -46,7 +63,7 @@ export class MatchingPreferencesModel {
    * Upsert matching preferences (create or update)
    */
   static async upsert(userId: string, data: CreateMatchingPreferencesInput): Promise<MatchingPreferences> {
-    return await prisma.matchingPreferences.upsert({
+    const result = await prisma.matchingPreferences.upsert({
       where: { userId },
       update: data,
       create: {
@@ -54,6 +71,11 @@ export class MatchingPreferencesModel {
         preferredActivities: data.preferredActivities || [],
       },
     });
+    
+    return {
+      ...result,
+      preferredActivities: (result.preferredActivities as string[]) || [],
+    } as MatchingPreferences;
   }
 
   /**

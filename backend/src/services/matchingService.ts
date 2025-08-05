@@ -2,7 +2,6 @@ import { UserModel } from '../models/User';
 import { FitnessStatsModel } from '../models/FitnessStats';
 import { MatchingPreferencesModel } from '../models/MatchingPreferences';
 import { MatchModel } from '../models/Match';
-import { StravaActivity } from '../types';
 import { prisma } from '../config/database';
 
 export interface PotentialMatch {
@@ -104,7 +103,7 @@ export class MatchingService {
 
     // Filter by minimum compatibility score and sort by score
     const filteredMatches = scoredMatches
-      .filter(match => match.compatibilityScore >= preferences.minCompatibilityScore)
+      .filter(match => match.compatibilityScore >= (preferences.minCompatibilityScore || 0))
       .sort((a, b) => b.compatibilityScore - a.compatibilityScore);
 
     // Apply pagination

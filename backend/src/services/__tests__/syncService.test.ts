@@ -23,6 +23,12 @@ describe('SyncService', () => {
 
   describe('syncUserActivities', () => {
     it('should handle user not found', async () => {
+      // Mock prisma to return a user without tokens
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-1',
+        fitnessStats: null,
+      });
+      
       // Mock getUserStravaTokens to return null
       jest.spyOn(service as any, 'getUserStravaTokens').mockResolvedValue(null);
 

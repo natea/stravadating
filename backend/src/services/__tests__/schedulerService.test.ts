@@ -1,7 +1,6 @@
 import * as cron from 'node-cron';
-import { schedulerService, SchedulerService } from '../schedulerService';
+import { SchedulerService } from '../schedulerService';
 import { syncService } from '../syncService';
-import { logger } from '../../utils/logger';
 
 // Mock dependencies
 jest.mock('node-cron');
@@ -141,7 +140,7 @@ describe('SchedulerService', () => {
     it('should return status of all jobs', () => {
       // Arrange
       service.init();
-      mockScheduledTask.running = true;
+      (mockScheduledTask as any).running = true;
 
       // Act
       const status = service.getJobsStatus();
@@ -317,7 +316,9 @@ describe('SchedulerService', () => {
       const scheduledFunction = mockCron.schedule.mock.calls[0][1];
 
       // Act
-      await scheduledFunction();
+      if (typeof scheduledFunction === 'function') {
+        await scheduledFunction('manual' as any);
+      }
 
       // Assert
       expect(mockSyncService.syncAllUsersActivities).toHaveBeenCalledTimes(1);
@@ -337,7 +338,9 @@ describe('SchedulerService', () => {
       const scheduledFunction = mockCron.schedule.mock.calls[1][1];
 
       // Act
-      await scheduledFunction();
+      if (typeof scheduledFunction === 'function') {
+        await scheduledFunction('manual' as any);
+      }
 
       // Assert
       expect(mockSyncService.cleanupRevokedUsers).toHaveBeenCalledTimes(1);
@@ -353,7 +356,9 @@ describe('SchedulerService', () => {
       const scheduledFunction = mockCron.schedule.mock.calls[0][1];
 
       // Act
-      await scheduledFunction();
+      if (typeof scheduledFunction === 'function') {
+        await scheduledFunction('manual' as any);
+      }
 
       // Assert
       expect(mockSyncService.syncAllUsersActivities).toHaveBeenCalledTimes(1);

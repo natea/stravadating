@@ -16,11 +16,12 @@ router.get('/photos/:filename', async (req, res): Promise<void> => {
     
     // Validate filename to prevent directory traversal
     if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Invalid filename',
         message: 'Filename contains invalid characters',
       });
+      return;
     }
 
     const uploadDir = process.env.UPLOAD_DIR || 'uploads/photos';
@@ -30,11 +31,12 @@ router.get('/photos/:filename', async (req, res): Promise<void> => {
     try {
       await fs.access(filePath);
     } catch {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'File not found',
         message: 'The requested photo does not exist',
       });
+      return;
     }
 
     // Set appropriate headers
@@ -62,7 +64,8 @@ router.get('/photos/:filename', async (req, res): Promise<void> => {
     // Check if client has cached version
     const clientETag = req.headers['if-none-match'];
     if (clientETag === `"${filename}"`) {
-      return res.status(304).end();
+      res.status(304).end();
+      return;
     }
 
     // Send file

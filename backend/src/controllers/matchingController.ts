@@ -9,7 +9,7 @@ export class MatchingController {
    */
   static async getPotentialMatches(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
@@ -54,7 +54,7 @@ export class MatchingController {
    */
   static async createMatch(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
@@ -107,7 +107,7 @@ export class MatchingController {
    */
   static async getUserMatches(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
@@ -147,7 +147,7 @@ export class MatchingController {
    */
   static async getMatchStats(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
@@ -173,7 +173,7 @@ export class MatchingController {
    */
   static async archiveMatch(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
@@ -219,7 +219,7 @@ export class MatchingController {
    */
   static async getMatchingPreferences(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
@@ -245,7 +245,7 @@ export class MatchingController {
    */
   static async updateMatchingPreferences(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;
@@ -311,7 +311,7 @@ export class MatchingController {
    */
   static async calculateCompatibility(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       if (!userId) {
         res.status(401).json({ error: 'User not authenticated' });
         return;

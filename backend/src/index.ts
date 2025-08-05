@@ -12,6 +12,8 @@ import uploadsRoutes from './routes/uploads';
 import matchingRoutes from './routes/matchingRoutes';
 import { webhookRoutes } from './routes/webhookRoutes';
 import { syncRoutes } from './routes/syncRoutes';
+import usersRoutes from './routes/users';
+import devRoutes from './routes/dev';
 import { schedulerService } from './services/schedulerService';
 import { logger } from './utils/logger';
 
@@ -42,13 +44,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
-app.use('/fitness', fitnessRoutes);
-app.use('/uploads', uploadsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/fitness', fitnessRoutes);
+app.use('/api/uploads', uploadsRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/users', usersRoutes);
+
+// Development-only routes
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/dev', devRoutes);
+}
 
 // Health check endpoint
 app.get('/health', (_req, res) => {

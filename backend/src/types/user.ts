@@ -18,6 +18,7 @@ export interface User {
   firstName: string;
   lastName: string;
   age: number;
+  gender?: string | null;
   city: string;
   state: string;
   latitude: number;
@@ -46,6 +47,7 @@ export interface UpdateUserInput {
   firstName?: string;
   lastName?: string;
   age?: number;
+  gender?: string | null;
   city?: string;
   state?: string;
   latitude?: number;

@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { MatchingController } from '../controllers/matchingController';
-import { authMiddleware } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
 // Apply authentication middleware to all matching routes
-router.use(authMiddleware);
+router.use(authenticateToken);
 
 /**
  * @route GET /api/matching/potential

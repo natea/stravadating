@@ -43,17 +43,38 @@ export class AuthController {
    */
   async handleStravaCallback(req: Request, res: Response): Promise<void> {
     try {
-      const { code, error } = req.query;
+      const { code, state, error } = req.query;
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-      // Handle OAuth errors
+      // Handle OAuth errors - redirect to frontend with error
       if (error) {
-        res.status(400).json({
-          success: false,
-          error: 'OAuth error',
-          message: `Strava OAuth error: ${error}`,
-        });
+        res.redirect(`${frontendUrl}/auth/callback?error=${error}&state=${state || ''}`);
         return;
       }
+
+      // Validate required parameters - redirect to frontend with error
+      if (!code || typeof code !== 'string') {
+        res.redirect(`${frontendUrl}/auth/callback?error=missing_code&state=${state || ''}`);
+        return;
+      }
+
+      // Redirect to frontend with code and state
+      // The frontend will then make an API call to complete the authentication
+      res.redirect(`${frontendUrl}/auth/callback?code=${code}&state=${state || ''}`);
+    } catch (error) {
+      console.error('Error in Strava callback:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/auth/callback?error=server_error`);
+    }
+  }
+
+  /**
+   * Complete Strava authentication after redirect
+   * This is called by the frontend after being redirected from Strava
+   */
+  async completeStravaAuth(req: Request, res: Response): Promise<void> {
+    try {
+      const { code } = req.query;
 
       // Validate required parameters
       if (!code || typeof code !== 'string') {
@@ -65,8 +86,33 @@ export class AuthController {
         return;
       }
 
+      // Log the attempt
+      console.log(`Attempting to exchange code: ${code.substring(0, 10)}...`);
+      
       // Exchange code for tokens
-      const stravaResponse = await authService.exchangeCodeForTokens(code);
+      let stravaResponse;
+      try {
+        stravaResponse = await authService.exchangeCodeForTokens(code);
+      } catch (error: any) {
+        // If code exchange fails, it might be because code was already used
+        console.error('Code exchange failed:', error.message);
+        
+        // Check if it's specifically a bad request (code already used)
+        if (error.message?.includes('Bad Request')) {
+          res.status(400).json({
+            success: false,
+            error: 'AUTH_CODE_ALREADY_USED',
+            message: 'This authorization code has already been used. Please go back to the login page and try again.',
+          });
+        } else {
+          res.status(400).json({
+            success: false,
+            error: 'AUTH_CODE_INVALID',
+            message: 'Authorization failed. Please try logging in again.',
+          });
+        }
+        return;
+      }
       
       // Check if user already exists
       const existingUser = await UserModel.findByStravaId(stravaResponse.athlete.id);
@@ -317,6 +363,7 @@ export class AuthController {
             lastName: user.lastName,
             stravaId: user.stravaId,
             age: user.age,
+            gender: user.gender,
             city: user.city,
             state: user.state,
             bio: user.bio,
@@ -354,13 +401,14 @@ export class AuthController {
         return;
       }
 
-      const { age, bio, city, state } = req.body;
+      const { age, bio, city, state, gender } = req.body;
 
       const updatedUser = await UserRegistrationService.updateUserProfile(userId, {
         age,
         bio,
         city,
         state,
+        gender,
       });
 
       res.json({
@@ -372,6 +420,7 @@ export class AuthController {
             firstName: updatedUser.firstName,
             lastName: updatedUser.lastName,
             age: updatedUser.age,
+            gender: updatedUser.gender,
             city: updatedUser.city,
             state: updatedUser.state,
             bio: updatedUser.bio,

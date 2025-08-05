@@ -6,18 +6,20 @@ export class MatchModel {
    * Create a new match
    */
   static async create(data: CreateMatchInput): Promise<Match> {
-    return await prisma.match.create({
+    const result = await prisma.match.create({
       data,
     });
+    return result as Match;
   }
 
   /**
    * Find match by ID
    */
   static async findById(id: string): Promise<Match | null> {
-    return await prisma.match.findUnique({
+    const result = await prisma.match.findUnique({
       where: { id },
     });
+    return result ? (result as Match) : null;
   }
 
   /**
@@ -74,7 +76,7 @@ export class MatchModel {
       ]);
 
       return {
-        data: matches,
+        data: matches as Match[],
         pagination: {
           page,
           limit,
@@ -84,7 +86,7 @@ export class MatchModel {
       };
     }
 
-    return await prisma.match.findMany({
+    const results = await prisma.match.findMany({
       where: whereClause,
       orderBy: { matchedAt: 'desc' },
       include: {
@@ -110,13 +112,14 @@ export class MatchModel {
         },
       },
     });
+    return results as Match[];
   }
 
   /**
    * Find match between two users
    */
   static async findByUserIds(user1Id: string, user2Id: string): Promise<Match | null> {
-    return await prisma.match.findFirst({
+    const result = await prisma.match.findFirst({
       where: {
         OR: [
           { user1Id, user2Id },
@@ -124,26 +127,29 @@ export class MatchModel {
         ],
       },
     });
+    return result ? (result as Match) : null;
   }
 
   /**
    * Update match
    */
   static async update(id: string, data: UpdateMatchInput): Promise<Match> {
-    return await prisma.match.update({
+    const result = await prisma.match.update({
       where: { id },
       data,
     });
+    return result as Match;
   }
 
   /**
    * Archive match
    */
   static async archive(id: string): Promise<Match> {
-    return await prisma.match.update({
+    const result = await prisma.match.update({
       where: { id },
       data: { status: 'archived' },
     });
+    return result as Match;
   }
 
   /**
@@ -202,7 +208,7 @@ export class MatchModel {
    * Get recent matches
    */
   static async getRecentMatches(userId: string, limit: number = 10): Promise<Match[]> {
-    return await prisma.match.findMany({
+    const results = await prisma.match.findMany({
       where: {
         OR: [
           { user1Id: userId },
@@ -231,5 +237,6 @@ export class MatchModel {
         },
       },
     });
+    return results as Match[];
   }
 }

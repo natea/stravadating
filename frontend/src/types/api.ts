@@ -23,7 +23,18 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  stravaId: number;
+  stravaId?: number;
+  stravaAthleteId?: number;
+  age: number;
+  gender?: string;
+  city: string;
+  state: string;
+  latitude?: number;
+  longitude?: number;
+  photos: string[];
+  bio: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface AuthResponse {
@@ -49,4 +60,83 @@ export enum UIAction {
   RECONNECT_STRAVA = 'reconnect_strava',
   LOGIN_REQUIRED = 'login_required',
   REFRESH_TOKEN = 'refresh_token',
+}
+
+export interface FitnessStats {
+  id: string;
+  userId: string;
+  weeklyDistance: number;
+  weeklyActivities: number;
+  averagePace: number | null;
+  favoriteActivities: string[];
+  totalDistance: number;
+  lastUpdated: Date;
+}
+
+export interface PotentialMatch {
+  userId: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    age: number;
+    city: string;
+    state: string;
+    photos: string[];
+    bio: string | null;
+  };
+  compatibilityScore: number;
+  compatibilityFactors: {
+    activityOverlap: number;
+    performanceSimilarity: number;
+    locationProximity: number;
+    ageCompatibility: number;
+  };
+  fitnessStats: {
+    weeklyDistance: number;
+    weeklyActivities: number;
+    averagePace: number | null;
+    favoriteActivities: string[];
+    totalDistance: number;
+  };
+}
+
+export interface MatchingPreferences {
+  id: string;
+  userId: string;
+  minAge: number;
+  maxAge: number;
+  maxDistance: number;
+  preferredActivities: string[];
+  minCompatibilityScore: number;
+}
+
+export interface Message {
+  id: string;
+  matchId: string;
+  senderId: string;
+  recipientId: string;
+  content: string;
+  sentAt: Date;
+  isRead: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  matchId: string;
+  participants: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    photos: string[];
+  }[];
+  otherUser?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    photos: string[];
+  };
+  lastMessage: Message | null;
+  unreadCount: number;
+  createdAt: Date;
 }

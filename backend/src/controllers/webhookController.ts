@@ -17,12 +17,6 @@ interface StravaWebhookEvent {
   };
 }
 
-interface StravaWebhookChallenge {
-  'hub.mode': string;
-  'hub.challenge': string;
-  'hub.verify_token': string;
-}
-
 export class WebhookController {
   /**
    * Handle Strava webhook subscription verification

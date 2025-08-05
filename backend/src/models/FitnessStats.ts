@@ -91,7 +91,7 @@ export class FitnessStatsModel {
     minWeeklyDistance: number,
     minWeeklyActivities: number
   ): Promise<FitnessStats[]> {
-    return await prisma.fitnessStats.findMany({
+    const results = await prisma.fitnessStats.findMany({
       where: {
         AND: [
           { weeklyDistance: { gte: minWeeklyDistance } },
@@ -110,13 +110,18 @@ export class FitnessStatsModel {
         },
       },
     });
+
+    return results.map(result => ({
+      ...result,
+      favoriteActivities: (result.favoriteActivities as string[]) || [],
+    })) as FitnessStats[];
   }
 
   /**
    * Get fitness stats with user info
    */
   static async findByUserIdWithUser(userId: string): Promise<(FitnessStats & { user: any }) | null> {
-    return await prisma.fitnessStats.findUnique({
+    const result = await prisma.fitnessStats.findUnique({
       where: { userId },
       include: {
         user: {
@@ -131,5 +136,16 @@ export class FitnessStatsModel {
         },
       },
     });
+
+    if (!result) return null;
+
+    return {
+      ...result,
+      favoriteActivities: (result.favoriteActivities as string[]) || [],
+      user: {
+        ...result.user,
+        photos: (result.user.photos as string[]) || [],
+      },
+    } as FitnessStats & { user: any };
   }
 }

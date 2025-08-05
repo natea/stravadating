@@ -14,10 +14,17 @@ router.get('/strava', authController.initiateStravaAuth.bind(authController));
 
 /**
  * @route   GET /auth/strava/callback
- * @desc    Handle Strava OAuth callback
+ * @desc    Handle Strava OAuth callback (redirects to frontend)
  * @access  Public
  */
 router.get('/strava/callback', authController.handleStravaCallback.bind(authController));
+
+/**
+ * @route   GET /auth/strava/complete
+ * @desc    Complete Strava authentication (called by frontend)
+ * @access  Public
+ */
+router.get('/strava/complete', authController.completeStravaAuth.bind(authController));
 
 /**
  * @route   POST /auth/refresh
