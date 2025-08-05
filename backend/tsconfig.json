@@ -34,7 +34,8 @@
     }
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "src/generated/prisma/**/*"
   ],
   "exclude": [
     "node_modules",

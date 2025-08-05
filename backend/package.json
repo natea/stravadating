@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "build": "tsc && cp -r src/generated dist/generated || true",
+    "build": "rm -rf dist && tsc",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint src --ext .ts",
