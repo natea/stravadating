@@ -37,16 +37,21 @@ const Login: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">StravaDating</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              StravaDating
+            </h1>
             <p className="text-gray-600">Connect with fitness-minded singles</p>
           </div>
 
           {/* Main Content */}
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Welcome Back!</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">
+                Welcome Back!
+              </h2>
               <p className="text-sm text-gray-600 mb-6">
-                Sign in with your Strava account to find your perfect fitness match
+                Sign in with your Strava account to find your perfect fitness
+                match
               </p>
             </div>
 
@@ -89,7 +94,11 @@ const Login: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    className="w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
                   </svg>
                   Continue with Strava
@@ -121,7 +130,7 @@ const Login: React.FC = () => {
                 Create an account with Strava
               </button>
             </div>
-            
+
             {/* Development Login Link */}
             {process.env.NODE_ENV !== 'production' && (
               <div className="mt-4 pt-4 border-t border-gray-100">
@@ -140,8 +149,9 @@ const Login: React.FC = () => {
           {/* Info Box */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-700">
-              <strong>Why Strava?</strong> We use Strava to verify your fitness activities and match
-              you with compatible partners based on your training habits and goals.
+              <strong>Why Strava?</strong> We use Strava to verify your fitness
+              activities and match you with compatible partners based on your
+              training habits and goals.
             </p>
           </div>
         </div>

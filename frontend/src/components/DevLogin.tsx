@@ -41,13 +41,19 @@ const DevLogin: React.FC = () => {
     setLoginLoading(userId);
     try {
       const response = await api.post(`/dev/login-as/${userId}`);
-      
+
       if (response.data.success) {
         // Store auth data
-        localStorage.setItem('authToken', response.data.data.tokens.accessToken);
-        localStorage.setItem('refreshToken', response.data.data.tokens.refreshToken);
+        localStorage.setItem(
+          'authToken',
+          response.data.data.tokens.accessToken
+        );
+        localStorage.setItem(
+          'refreshToken',
+          response.data.data.tokens.refreshToken
+        );
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
-        
+
         console.log(`✅ Logged in as ${userName}`);
         navigate('/dashboard');
       }
@@ -98,7 +104,10 @@ const DevLogin: React.FC = () => {
             </h2>
             <div className="space-y-3">
               {maleUsers.map(user => (
-                <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                >
                   <div>
                     <h3 className="font-medium">
                       {user.firstName} {user.lastName}
@@ -109,7 +118,9 @@ const DevLogin: React.FC = () => {
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                   <button
-                    onClick={() => loginAsUser(user.id, `${user.firstName} ${user.lastName}`)}
+                    onClick={() =>
+                      loginAsUser(user.id, `${user.firstName} ${user.lastName}`)
+                    }
                     disabled={loginLoading === user.id}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 text-sm"
                   >
@@ -127,7 +138,10 @@ const DevLogin: React.FC = () => {
             </h2>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {femaleUsers.map(user => (
-                <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                >
                   <div>
                     <h3 className="font-medium">
                       {user.firstName} {user.lastName}
@@ -138,7 +152,9 @@ const DevLogin: React.FC = () => {
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                   <button
-                    onClick={() => loginAsUser(user.id, `${user.firstName} ${user.lastName}`)}
+                    onClick={() =>
+                      loginAsUser(user.id, `${user.firstName} ${user.lastName}`)
+                    }
                     disabled={loginLoading === user.id}
                     className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700 disabled:bg-gray-400 text-sm"
                   >
