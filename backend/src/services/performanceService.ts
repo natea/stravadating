@@ -1,5 +1,5 @@
 import { createClient } from 'redis';
-import { prisma } from '../config/database';
+// import { prisma } from '../config/database'; // Commented out - not used
 import { logger } from '../utils/logger';
 import compression from 'compression';
 import { Request, Response, NextFunction } from 'express';

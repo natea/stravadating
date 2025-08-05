@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { prisma } from '../config/database';
 import * as Sentry from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 export interface AppError extends Error {
   statusCode: number;
@@ -23,9 +23,9 @@ export class ErrorService {
     Sentry.init({
       dsn,
       integrations: [
-        new Sentry.Integrations.Http({ tracing: true }),
-        new Sentry.Integrations.Express({ app: require('express')() }),
-        new ProfilingIntegration(),
+        Sentry.httpIntegration(),
+        Sentry.expressIntegration(),
+        nodeProfilingIntegration(),
       ],
       tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
       profilesSampleRate: 1.0,
@@ -49,8 +49,12 @@ export class ErrorService {
     const error = new Error(message) as AppError;
     error.statusCode = statusCode;
     error.isOperational = isOperational;
-    error.code = code;
-    error.details = details;
+    if (code !== undefined) {
+      error.code = code;
+    }
+    if (details !== undefined) {
+      error.details = details;
+    }
     return error;
   }
 
@@ -60,8 +64,8 @@ export class ErrorService {
   static errorHandler = (
     error: AppError,
     req: Request,
-    res: Response,
-    next: NextFunction
+    _res: Response,
+    _next: NextFunction
   ) => {
     const {
       statusCode = 500,
@@ -116,7 +120,7 @@ export class ErrorService {
       response.stack = error.stack;
     }
 
-    res.status(statusCode).json(response);
+    _res.status(statusCode).json(response);
   };
 
   /**
@@ -133,19 +137,18 @@ export class ErrorService {
    */
   private static async logErrorToDatabase(error: AppError, req: Request) {
     try {
-      await prisma.errorLog.create({
-        data: {
-          message: error.message,
-          statusCode: error.statusCode,
-          code: error.code,
-          stack: error.stack,
-          details: JSON.stringify(error.details),
-          url: req.url,
-          method: req.method,
-          userAgent: req.headers['user-agent'],
-          ipAddress: req.ip,
-          userId: (req as any).user?.id,
-        },
+      // Log to console for now - errorLog table doesn't exist in schema
+      logger.error('Database error log:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        code: error.code,
+        stack: error.stack,
+        details: error.details,
+        url: req.url,
+        method: req.method,
+        userAgent: req.headers['user-agent'],
+        ipAddress: req.ip,
+        userId: (req as any).user?.id,
       });
     } catch (err) {
       // Fail silently - don't break the app if logging fails
@@ -156,7 +159,7 @@ export class ErrorService {
   /**
    * Not found handler
    */
-  static notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
+  static notFoundHandler = (req: Request, _res: Response, next: NextFunction) => {
     const error = this.createError(
       `Resource not found: ${req.originalUrl}`,
       404,

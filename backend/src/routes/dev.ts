@@ -7,7 +7,7 @@ const router = Router();
 // Development-only route to login as any user
 // WARNING: This should NEVER be enabled in production
 if (process.env.NODE_ENV !== 'production') {
-  router.post('/login-as/:userId', async (req, res) => {
+  router.post('/login-as/:userId', async (req, res): Promise<any> => {
     try {
       const { userId } = req.params;
       
@@ -60,13 +60,13 @@ if (process.env.NODE_ENV !== 'production') {
   });
 
   // Get list of all users for testing
-  router.get('/users', async (req, res) => {
+  router.get('/users', async (_req, res) => {
     try {
-      const users = await UserModel.findAll({}, { limit: 50 });
+      const result = await UserModel.findMany({ page: 1, limit: 50 });
       
       res.json({
         success: true,
-        data: users.map(user => ({
+        data: result.data.map((user: any) => ({
           id: user.id,
           firstName: user.firstName,
           lastName: user.lastName,

@@ -250,7 +250,7 @@ export class MessageModel {
       };
     }
 
-    return await prisma.message.findMany({
+    const messages = await prisma.message.findMany({
       where: whereClause,
       orderBy: { sentAt: 'desc' },
       include: {
@@ -264,6 +264,14 @@ export class MessageModel {
         },
       },
     });
+    
+    return messages.map(msg => ({
+      ...msg,
+      sender: {
+        ...msg.sender,
+        photos: msg.sender.photos as string[],
+      },
+    })) as MessageWithSender[];
   }
 
   /**

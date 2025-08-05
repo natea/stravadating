@@ -163,7 +163,7 @@ export class MessageService {
       throw new Error('Match not found or user not authorized');
     }
 
-    const { page = 1, limit = 50, sortBy = 'createdAt', sortOrder = 'desc' } = options;
+    const { page = 1, limit = 50, sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
 
     // Get total count

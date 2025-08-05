@@ -109,7 +109,7 @@ export class SecurityService {
    * Generate JWT token
    */
   static generateJWT(payload: any, expiresIn: string = '1h'): string {
-    return jwt.sign(payload, this.config.jwtSecret, { expiresIn });
+    return jwt.sign(payload, this.config.jwtSecret, { expiresIn } as jwt.SignOptions);
   }
 
   /**
@@ -284,7 +284,7 @@ export class SecurityService {
   /**
    * Check for account lockout (simplified without login attempts table)
    */
-  static async checkAccountLockout(email: string): Promise<boolean> {
+  static async checkAccountLockout(_email: string): Promise<boolean> {
     // For now, return false - can be implemented with Redis or in-memory cache
     return false;
   }
@@ -396,7 +396,7 @@ export class SecurityService {
    * Session validation middleware (simplified without session table)
    */
   static validateSession() {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
       try {
         const token = req.headers.authorization?.split(' ')[1];
         
@@ -418,8 +418,8 @@ export class SecurityService {
    * IP-based access control
    */
   static ipAccessControl(allowedIPs: string[] = []) {
-    return (req: Request, res: Response, next: NextFunction) => {
-      const clientIP = req.ip || req.connection.remoteAddress || '';
+    return (req: Request, res: Response, next: NextFunction): void | Response => {
+      const clientIP = req.ip || (req as any).connection?.remoteAddress || '';
       
       if (allowedIPs.length > 0 && !allowedIPs.includes(clientIP)) {
         return res.status(403).json({ 
