@@ -33,7 +33,7 @@ interface StravaTokenRefreshResponse {
   expires_at: number;
 }
 
-interface RateLimitInfo {
+export interface RateLimitInfo {
   shortTermUsage: number;
   shortTermLimit: number;
   dailyUsage: number;

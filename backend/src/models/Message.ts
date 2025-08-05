@@ -54,7 +54,7 @@ export class MessageModel {
       ]);
 
       return {
-        data: messages,
+        data: messages as MessageWithSender[],
         pagination: {
           page,
           limit,
@@ -77,7 +77,7 @@ export class MessageModel {
           },
         },
       },
-    });
+    }) as MessageWithSender[];
   }
 
   /**
@@ -240,7 +240,7 @@ export class MessageModel {
       ]);
 
       return {
-        data: messages,
+        data: messages as MessageWithSender[],
         pagination: {
           page,
           limit,

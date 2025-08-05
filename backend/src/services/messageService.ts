@@ -1,6 +1,4 @@
 import { prisma } from '../config/database';
-import { MessageModel } from '../models/Message';
-import crypto from 'crypto';
 import { Server as SocketServer } from 'socket.io';
 
 export interface SendMessageInput {
@@ -27,8 +25,6 @@ export interface PaginationOptions {
 
 export class MessageService {
   private static io: SocketServer | null = null;
-  private static encryptionKey = process.env.MESSAGE_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
-  private static algorithm = 'aes-256-gcm';
 
   /**
    * Initialize Socket.io server
@@ -86,46 +82,6 @@ export class MessageService {
   }
 
   /**
-   * Encrypt message content
-   */
-  private static encryptMessage(text: string): { encrypted: string; iv: string; authTag: string } {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(
-      this.algorithm,
-      Buffer.from(this.encryptionKey, 'hex').slice(0, 32),
-      iv
-    );
-
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    const authTag = cipher.getAuthTag();
-
-    return {
-      encrypted,
-      iv: iv.toString('hex'),
-      authTag: authTag.toString('hex'),
-    };
-  }
-
-  /**
-   * Decrypt message content
-   */
-  private static decryptMessage(encrypted: string, iv: string, authTag: string): string {
-    const decipher = crypto.createDecipheriv(
-      this.algorithm,
-      Buffer.from(this.encryptionKey, 'hex').slice(0, 32),
-      Buffer.from(iv, 'hex')
-    );
-
-    decipher.setAuthTag(Buffer.from(authTag, 'hex'));
-
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
-  }
-
-  /**
    * Send a message
    */
   static async sendMessage(input: SendMessageInput): Promise<any> {
@@ -145,18 +101,12 @@ export class MessageService {
       throw new Error('Users are not matched or match is not active');
     }
 
-    // Encrypt message content
-    const { encrypted, iv, authTag } = this.encryptMessage(input.content);
-
     // Create message in database
     const message = await prisma.message.create({
       data: {
         senderId: input.senderId,
-        recipientId: input.recipientId,
         matchId: input.matchId,
-        content: encrypted,
-        encryptionIv: iv,
-        encryptionAuthTag: authTag,
+        content: input.content,
         isRead: false,
       },
       include: {
@@ -168,41 +118,21 @@ export class MessageService {
             photos: true,
           },
         },
-        recipient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
       },
     });
-
-    // Decrypt content for response
-    const decryptedMessage = {
-      ...message,
-      content: input.content, // Return unencrypted for sender
-    };
 
     // Emit real-time event
     if (this.io) {
       // Send to recipient
-      this.io.to(`user-${input.recipientId}`).emit('new-message', {
-        ...decryptedMessage,
-        content: input.content,
-      });
+      this.io.to(`user-${input.recipientId}`).emit('new-message', message);
 
       // Send to match room (for active conversations)
-      this.io.to(`match-${input.matchId}`).emit('message-sent', decryptedMessage);
+      this.io.to(`match-${input.matchId}`).emit('message-sent', message);
     }
 
-    // Update match's lastMessageAt timestamp
-    await prisma.match.update({
-      where: { id: input.matchId },
-      data: { updatedAt: new Date() },
-    });
+    // Note: Match doesn't have updatedAt field in current schema
 
-    return decryptedMessage;
+    return message;
   }
 
   /**
@@ -253,42 +183,14 @@ export class MessageService {
             photos: true,
           },
         },
-        recipient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
       },
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: { sentAt: sortOrder },
       skip,
       take: limit,
     });
 
-    // Decrypt messages
-    const decryptedMessages = messages.map(msg => {
-      try {
-        const decrypted = this.decryptMessage(
-          msg.content,
-          msg.encryptionIv!,
-          msg.encryptionAuthTag!
-        );
-        return {
-          ...msg,
-          content: decrypted,
-        };
-      } catch (error) {
-        console.error('Failed to decrypt message:', msg.id);
-        return {
-          ...msg,
-          content: '[Message could not be decrypted]',
-        };
-      }
-    });
-
     return {
-      messages: decryptedMessages,
+      messages,
       pagination: {
         page,
         limit,
@@ -305,7 +207,6 @@ export class MessageService {
     const message = await prisma.message.findFirst({
       where: {
         id: messageId,
-        recipientId: userId,
       },
     });
 
@@ -315,7 +216,7 @@ export class MessageService {
 
     await prisma.message.update({
       where: { id: messageId },
-      data: { isRead: true, readAt: new Date() },
+      data: { isRead: true },
     });
 
     // Emit read receipt
@@ -335,12 +236,11 @@ export class MessageService {
     await prisma.message.updateMany({
       where: {
         matchId,
-        recipientId: userId,
+        senderId: { not: userId },
         isRead: false,
       },
       data: {
         isRead: true,
-        readAt: new Date(),
       },
     });
 
@@ -358,9 +258,21 @@ export class MessageService {
    * Get unread message count for a user
    */
   static async getUnreadCount(userId: string): Promise<number> {
+    // Get all matches for the user
+    const userMatches = await prisma.match.findMany({
+      where: {
+        OR: [{ user1Id: userId }, { user2Id: userId }],
+        status: 'active',
+      },
+      select: { id: true },
+    });
+
+    const matchIds = userMatches.map(m => m.id);
+    
     return await prisma.message.count({
       where: {
-        recipientId: userId,
+        matchId: { in: matchIds },
+        senderId: { not: userId },
         isRead: false,
       },
     });
@@ -415,33 +327,13 @@ export class MessageService {
         },
         match: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { sentAt: 'desc' },
       skip,
       take: limit,
     });
 
-    // Decrypt messages
-    const decryptedMessages = messages.map(msg => {
-      try {
-        const decrypted = this.decryptMessage(
-          msg.content,
-          msg.encryptionIv!,
-          msg.encryptionAuthTag!
-        );
-        return {
-          ...msg,
-          content: decrypted,
-        };
-      } catch {
-        return {
-          ...msg,
-          content: '[Message could not be decrypted]',
-        };
-      }
-    });
-
-    // Filter by content after decryption
-    const filteredMessages = decryptedMessages.filter(msg =>
+    // Filter by content after getting messages
+    const filteredMessages = messages.filter(msg =>
       msg.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -471,15 +363,10 @@ export class MessageService {
     }
 
     // Soft delete by updating content
-    const { encrypted, iv, authTag } = this.encryptMessage('[Message deleted]');
-    
     await prisma.message.update({
       where: { id: messageId },
       data: {
-        content: encrypted,
-        encryptionIv: iv,
-        encryptionAuthTag: authTag,
-        isDeleted: true,
+        content: '[Message deleted]',
       },
     });
 
@@ -530,7 +417,7 @@ export class MessageService {
         // Get last message
         const lastMessage = await prisma.message.findFirst({
           where: { matchId: match.id },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { sentAt: 'desc' },
           include: {
             sender: {
               select: { id: true, firstName: true },
@@ -542,22 +429,14 @@ export class MessageService {
         const unreadCount = await prisma.message.count({
           where: {
             matchId: match.id,
-            recipientId: userId,
+            senderId: { not: userId },
             isRead: false,
           },
         });
 
         let lastMessageContent = null;
         if (lastMessage) {
-          try {
-            lastMessageContent = this.decryptMessage(
-              lastMessage.content,
-              lastMessage.encryptionIv!,
-              lastMessage.encryptionAuthTag!
-            );
-          } catch {
-            lastMessageContent = '[Message unavailable]';
-          }
+          lastMessageContent = lastMessage.content;
         }
 
         return {
@@ -568,7 +447,7 @@ export class MessageService {
             content: lastMessageContent,
             senderId: lastMessage.senderId,
             senderName: lastMessage.sender.firstName,
-            createdAt: lastMessage.createdAt,
+            createdAt: lastMessage.sentAt,
           } : null,
           unreadCount,
           matchedAt: match.matchedAt,

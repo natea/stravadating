@@ -150,7 +150,9 @@ export class PerformanceService {
   static async batchOperation<T>(
     operations: Array<() => Promise<T>>
   ): Promise<T[]> {
-    return await prisma.$transaction(operations.map(op => op()));
+    // Execute operations in parallel without transaction for now
+    // Since operations return Promise<T>, not PrismaPromise
+    return await Promise.all(operations.map(op => op()));
   }
 
   /**
@@ -389,7 +391,7 @@ export class PerformanceService {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: payload ? JSON.stringify(payload) : undefined,
+            ...(payload && { body: JSON.stringify(payload) }),
           }).then(res => ({
             status: res.status,
             time: Date.now(),

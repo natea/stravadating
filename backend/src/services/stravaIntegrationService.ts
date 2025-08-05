@@ -235,7 +235,7 @@ export class StravaIntegrationService {
   /**
    * Get rate limit status from Strava service
    */
-  getRateLimitStatus() {
+  getRateLimitStatus(): import('./stravaService').RateLimitInfo {
     return this.stravaService.getRateLimitStatus();
   }
 
