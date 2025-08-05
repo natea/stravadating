@@ -44,14 +44,8 @@ const DevLogin: React.FC = () => {
 
       if (response.data.success) {
         // Store auth data
-        localStorage.setItem(
-          'authToken',
-          response.data.data.tokens.accessToken
-        );
-        localStorage.setItem(
-          'refreshToken',
-          response.data.data.tokens.refreshToken
-        );
+        localStorage.setItem('authToken', response.data.data.tokens.accessToken);
+        localStorage.setItem('refreshToken', response.data.data.tokens.refreshToken);
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
 
         console.log(`✅ Logged in as ${userName}`);
@@ -83,16 +77,10 @@ const DevLogin: React.FC = () => {
     <div className="min-h-screen bg-gray-100 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            🔧 Development Login
-          </h1>
-          <p className="text-gray-600">
-            Choose any user to login as for testing purposes
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">🔧 Development Login</h1>
+          <p className="text-gray-600">Choose any user to login as for testing purposes</p>
           <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 rounded-lg inline-block">
-            <p className="text-yellow-800 text-sm">
-              ⚠️ This is for development testing only!
-            </p>
+            <p className="text-yellow-800 text-sm">⚠️ This is for development testing only!</p>
           </div>
         </div>
 
@@ -118,9 +106,7 @@ const DevLogin: React.FC = () => {
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                   <button
-                    onClick={() =>
-                      loginAsUser(user.id, `${user.firstName} ${user.lastName}`)
-                    }
+                    onClick={() => loginAsUser(user.id, `${user.firstName} ${user.lastName}`)}
                     disabled={loginLoading === user.id}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 text-sm"
                   >
@@ -152,9 +138,7 @@ const DevLogin: React.FC = () => {
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                   <button
-                    onClick={() =>
-                      loginAsUser(user.id, `${user.firstName} ${user.lastName}`)
-                    }
+                    onClick={() => loginAsUser(user.id, `${user.firstName} ${user.lastName}`)}
                     disabled={loginLoading === user.id}
                     className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700 disabled:bg-gray-400 text-sm"
                   >
