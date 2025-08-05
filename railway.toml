@@ -17,7 +17,7 @@ internalPort = 3000
 
 [[services]]
 name = "frontend"
-buildCommand = "cd frontend && npm ci --legacy-peer-deps && npm run build"
+buildCommand = "cd frontend && npm ci --legacy-peer-deps && CI=false npm run build"
 startCommand = "npx serve -s frontend/build -l 3001"
 healthcheckPath = "/"
 healthcheckTimeout = 3
